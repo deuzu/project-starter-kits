@@ -1,0 +1,11 @@
+version: '3.7'
+
+services:
+  app:
+    image: kibatic/symfony
+    working_dir: /app
+    volumes:
+      - ./docker/nginx-php/default.conf:/etc/nginx/sites-enabled/default
+      - ./app/:/app
+    ports:
+      - {{ docker_port_prefix }}80:80
