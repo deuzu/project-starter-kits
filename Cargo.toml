@@ -1,0 +1,17 @@
+[package]
+name = "project-starter-kits"
+version = "0.1.0"
+authors = ["Deuzu"]
+edition = "2018"
+
+[[bin]]
+name = "psk"
+path = "src/main.rs"
+
+[dependencies]
+dialoguer = "0.6.2"
+rust-embed="5.5.1"
+
+[dependencies.tera]
+version = "1"
+default-features = false

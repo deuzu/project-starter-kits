@@ -1,0 +1,14 @@
+version: '3.7'
+
+services:
+  app:
+    image: node
+    working_dir: /app
+    volumes:
+      - ./app/:/app
+    ports:
+      - {{ docker_port_prefix }}30:3000
+    command: "yarn start"
+    stdin_open: true
+    healthcheck:
+      test: "curl --fail http://localhost:3000/"
