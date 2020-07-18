@@ -3,7 +3,8 @@ name: PR
 on:
   push:
     branches-ignore:
-      - master
+      - *
+      # - master
 
 jobs:
   build:

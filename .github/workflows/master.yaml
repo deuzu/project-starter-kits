@@ -1,16 +1,17 @@
 name: Master
 
-on:
-  push:
-    branches:
-      - master
+# on:
+#   push:
+#     branches:
+#       - master
+
+on: push
 
 jobs:
-  build:
+  build_test:
     runs-on: ubuntu-latest
     container:
       image: rust:latest
-
     steps:
       - uses: actions/checkout@v2
       - name: Cache cargo files
@@ -19,56 +20,52 @@ jobs:
           path: ~/.cargo
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Build
-        run: cargo build
-
-  test:
-    runs-on: ubuntu-latest
-    container:
-      image: rust:latest
-
-    steps:
-      - uses: actions/checkout@v2
-      - name: Cache cargo files
-        uses: actions/cache@v1
+        run: cargo build --release
+      - name: Upload psk binary
+        uses: actions/upload-artifact@v1
         with:
-          path: ~/.cargo
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          name: psk
+          path: target/release/psk
       - name: Test
         run: cargo test
-
-  check-release:
-    name: Check for release
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Get commit subject
-        run: |
-          echo ::set-env name=commit_subject::$(git log --format=%s -n 1 ${{ github.event.after }})
-          echo ::set-env name=tag_name::$(echo "${{ commit_subject }}" | grep -oP '(?<=release\()(.*)(?=\))'
 
   release:
     name: Release master branch
     runs-on: ubuntu-latest
-    if: startsWith(env.commit_subject, 'release') && !!tag_name
+    needs: build_test
     steps:
       - uses: actions/checkout@v2
+        # The `if` has to be duplicated on each steps because of a limitation
+        # CF https://github.community/t/how-to-set-and-access-a-workflow-variable/17335
+        if: startsWith(github.event.head_commit.message, 'release')
+      - name: Get commit data
+        if: startsWith(github.event.head_commit.message, 'release')
+        run: |
+          echo ::set-env name=TAG_NAME::$(echo "${{ github.event.head_commit.message }}" | grep -oP '(?<=release\()(.*)(?=\))')
       - name: Create Release
+        if: startsWith(github.event.head_commit.message, 'release')
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ env.tag_name }}
-          release_name: Release ${{ env.tag_name }}
+          tag_name: ${{ env.TAG_NAME }}
+          release_name: Release ${{ env.TAG_NAME }}
           draft: false
           prerelease: false
-      # - name: Upload Release Asset
-      #   id: upload-release-asset
-      #   uses: actions/upload-release-asset@v1
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-      #     asset_path: ./my-artifact.zip
-      #     asset_name: my-artifact.zip
-      #     asset_content_type: application/zip
+      - name: Download binary psk
+        if: startsWith(github.event.head_commit.message, 'release')
+        uses: actions/download-artifact@v1
+        with:
+          name: psk
+      - name: Upload Release Asset
+        if: startsWith(github.event.head_commit.message, 'release')
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./psk/psk
+          asset_name: psk
+          asset_content_type: application/octet-stream
