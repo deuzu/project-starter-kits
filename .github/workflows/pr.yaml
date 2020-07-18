@@ -1,0 +1,29 @@
+name: PR
+
+on:
+  push:
+    branches-ignore:
+      - master
+
+jobs:
+  build_test:
+    runs-on: ubuntu-latest
+    container:
+      image: rust:latest
+    steps:
+      - uses: actions/checkout@v2
+      # TODO improve cache
+      - name: Cache cargo files
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Build
+        run: cargo build --release
+      - name: Upload psk binary
+        uses: actions/upload-artifact@v1
+        with:
+          name: psk
+          path: target/release/psk
+      - name: Test
+        run: cargo test --release
