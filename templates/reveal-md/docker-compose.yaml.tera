@@ -1,0 +1,11 @@
+version: '3.7'
+
+services:
+  app:
+    image: webpronl/reveal-md
+    volumes:
+      - ./:/slides
+    ports:
+      - {{ docker_port_prefix }}80:1948
+    healthcheck:
+      test: "curl --fail http://localhost:1948/"

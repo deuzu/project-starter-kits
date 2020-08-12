@@ -1,0 +1,6 @@
+{
+  "separator": "^\n\n\n",
+  "verticalSeparator": "^\n\n",
+  "theme": "white",
+  "highlight-theme": "github"
+}

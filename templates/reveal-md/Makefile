@@ -1,4 +1,4 @@
-.PHONY: all install help clean
+.PHONY: all install clean help
 
 ## Build the app
 all:
